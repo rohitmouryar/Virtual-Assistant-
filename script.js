@@ -1,100 +1,155 @@
-let btn = document.querySelector("#btn");
-let content = document.querySelector("#content");
-let voice = document.querySelector("#voice")
+const $ = (selector) => document.querySelector(selector);
+const messages = $('#messages');
+const input = $('#userInput');
+const form = $('#chatForm');
+const micBtn = $('#micBtn');
+const themeBtn = $('#themeBtn');
+const soundBtn = $('#soundBtn');
+const STORAGE_KEY = 'shifra-conversation-v2';
+let soundEnabled = localStorage.getItem('shifra-sound') !== 'off';
+
+function escapeText(value) {
+  const node = document.createElement('div');
+  node.textContent = value;
+  return node.innerHTML;
+}
+
+function timeNow() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function saveConversation() {
+  const history = [...messages.querySelectorAll('.message')].map((item) => ({
+    role: item.classList.contains('user') ? 'user' : 'assistant',
+    text: item.querySelector('.bubble-text')?.textContent || ''
+  })).filter((item) => item.text);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-40)));
+}
+
+function addMessage(text, role = 'assistant', shouldSave = true) {
+  const article = document.createElement('article');
+  article.className = `message ${role}`;
+  article.innerHTML = `<div class="message-avatar">${role === 'user' ? 'YOU' : 'S'}</div><div class="bubble"><div class="bubble-text">${escapeText(text)}</div><div class="meta">${timeNow()}</div>${role === 'assistant' ? '<button class="copy-btn" type="button">Copy answer</button>' : ''}</div>`;
+  const copy = article.querySelector('.copy-btn');
+  copy?.addEventListener('click', async () => {
+    await navigator.clipboard?.writeText(text);
+    copy.textContent = 'Copied';
+    setTimeout(() => copy.textContent = 'Copy answer', 1200);
+  });
+  messages.append(article);
+  messages.scrollTop = messages.scrollHeight;
+  if (shouldSave) saveConversation();
+}
 
 function speak(text) {
-  // Create a SpeechSynthesisUtterance object
-  let text_speak = new SpeechSynthesisUtterance(text);
-  text_speak.rate = 1;
-  text_speak.pitch = 1;
-  text_speak.volume = 1;
-  text_speak.lang = "hi-GB"; // Corrected to use a valid language code
-  window.speechSynthesis.speak(text_speak);
+  if (!soundEnabled || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = /[\u0900-\u097F]/.test(text) ? 'hi-IN' : 'en-IN';
+  utterance.rate = 1;
+  speechSynthesis.speak(utterance);
 }
 
-function wishMe() {
-  let day = new Date();
-  let hours = day.getHours();
-  if (hours >= 0 && hours < 12) {
-    speak("Good Morning, Sir");
-  } else if (hours >= 12 && hours < 16) {
-    speak("Good Afternoon, Sir");
-  } else {
-    speak("Good Evening, Sir");
-  }
+function calculate(message) {
+  const normalized = message.replace(/calculate|what is|solve/gi, '').replace(/[×x]/g, '*').replace(/÷/g, '/').trim();
+  if (!/^[\d\s+\-*/().%]+$/.test(normalized)) return null;
+  try {
+    const tokens = normalized.match(/\d+(?:\.\d+)?|[()+\-*/%]/g);
+    if (!tokens || tokens.join('') !== normalized.replace(/\s/g, '')) return null;
+    let position = 0;
+    const parsePrimary = () => {
+      if (tokens[position] === '(') {
+        position++;
+        const value = parseExpression();
+        if (tokens[position++] !== ')') throw new Error('Missing bracket');
+        return value;
+      }
+      const value = Number(tokens[position++]);
+      if (!Number.isFinite(value)) throw new Error('Invalid number');
+      return value;
+    };
+    const parseUnary = () => tokens[position] === '-' ? (position++, -parseUnary()) : parsePrimary();
+    const parseTerm = () => {
+      let value = parseUnary();
+      while (['*', '/', '%'].includes(tokens[position])) {
+        const operator = tokens[position++];
+        const right = parseUnary();
+        value = operator === '*' ? value * right : operator === '/' ? value / right : value % right;
+      }
+      return value;
+    };
+    const parseExpression = () => {
+      let value = parseTerm();
+      while (['+', '-'].includes(tokens[position])) {
+        const operator = tokens[position++];
+        const right = parseTerm();
+        value = operator === '+' ? value + right : value - right;
+      }
+      return value;
+    };
+    const result = parseExpression();
+    if (position !== tokens.length) return null;
+    return Number.isFinite(result) ? `${normalized} = ${result}` : null;
+  } catch { return null; }
 }
 
-// Greet user on page load
-window.addEventListener("load", () => {
-  wishMe();
-});
-
-let speechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = new speechRecognition();
-
-recognition.onresult = (event) => {
-  let currentIndex = event.resultIndex;
-  let transcript = event.results[currentIndex][0].transcript.trim(); // Ensure trimmed text
-  content.innerText = transcript;
-  console.log("User said:", transcript); // Debugging log
-  takeCommand(transcript.toLowerCase()); // Normalize text for case-insensitive match
-};
-
-btn.addEventListener("click", () => {
-  recognition.start();
-  btn.style.display="none"
-  voice.style.display="block"
-});
-
-function takeCommand(message) {
-  btn.style.display="flex"
-  voice.style.display="none"
-  console.log("Processing command:", message); // Debugging log
-  if (message.includes("hello") || message.includes("hey")) {
-    speak("Hello sir, what can I help you with?");
-  } else if (message.includes("who are you")) {
-    speak("I am your virtual assistant, created by Rohit sir.");
-  }
-    else if (message.includes("How are you ")) {
-      speak("I am fine ");
-  } else if (message.includes("open youtube")) {
-    speak("Opening YouTube");
-    window.open("https://www.youtube.com/", "_blank");
-  }
-  else if (message.includes("open google")) {
-    speak("Opening google");
-    window.open("https://www.google.com/", "_blank");
-  }
-  else if (message.includes("open facebook")) {
-    speak("Opening facebook");
-    window.open("https://www.facebook.com/", "_blank");
-  }
-  else if (message.includes("open instagram")) {
-    speak("Opening instagram");
-    window.open("https://www.instagram.com/", "_blank");
-  }
-  else if (message.includes("open chatgpt")) {
-    speak("Opening chatgpt");
-    window.open("https://www.chatgpt.com/", "_blank");
-  }
-  
-  else if (message.includes("open calculator")) {
-    speak("Opening calculator");
-    window.open("calculator://");
-  }
-  else if (message.includes("time")) {
-    let time=new Date().toLocaleString(undefined,{hour:"numeric",minute:"numeric"})
-    speak(time)
-  }
-  else if (message.includes("date")) {
-    let date=new Date().toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric"})
-    speak(date)
-  }
-   
-  else{ 
-    let finalText="This is what i found on internet regarding"+message.replace("shipra","")|| message.replace("shifra","")
-    speak(finalText)
-    window.open(`https://www.google.com/search?q=${message.replace("shipra","")}`,"_blank")
-  }
+function getReply(raw) {
+  const message = raw.toLowerCase().trim();
+  const math = calculate(message);
+  if (math) return math;
+  if (/^(hi|hello|hey|namaste)|\bhello\b/.test(message)) return 'Hello! I’m Shifra. How can I help you today?';
+  if (message.includes('how are you')) return 'I’m working perfectly and ready to help. How are you doing?';
+  if (message.includes('who are you') || message.includes('your name')) return 'I’m Shifra, your browser-based virtual assistant. I can answer common questions, calculate, tell the date and time, and open useful websites.';
+  if (message.includes('what can you do') || message === 'help') return 'Try asking for the date or time, a calculation like “45 * 12”, or say “open YouTube”. For topics outside my built-in knowledge, I can open a Google search.';
+  if (message.includes('time')) return `The current time is ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`;
+  if (message.includes('date') || message.includes('day')) return `Today is ${new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.`;
+  const sites = { youtube: 'https://www.youtube.com', google: 'https://www.google.com', facebook: 'https://www.facebook.com', instagram: 'https://www.instagram.com', chatgpt: 'https://chatgpt.com' };
+  const site = Object.keys(sites).find((name) => message.includes(`open ${name}`));
+  if (site) { window.open(sites[site], '_blank', 'noopener'); return `Opening ${site[0].toUpperCase() + site.slice(1)} for you.`; }
+  if (message.includes('thank')) return 'You’re welcome! I’m here whenever you need me.';
+  const query = encodeURIComponent(raw);
+  setTimeout(() => window.open(`https://www.google.com/search?q=${query}`, '_blank', 'noopener'), 700);
+  return `I don’t have a reliable built-in answer for that yet, so I’m opening a Google search for “${raw}”.`;
 }
+
+function showTyping() {
+  const node = document.createElement('article');
+  node.className = 'message typing-message';
+  node.innerHTML = '<div class="message-avatar">S</div><div class="bubble typing"><span></span><span></span><span></span></div>';
+  messages.append(node); messages.scrollTop = messages.scrollHeight;
+  return node;
+}
+
+function sendMessage(text) {
+  const clean = text.trim();
+  if (!clean) return;
+  addMessage(clean, 'user'); input.value = ''; input.focus();
+  const typing = showTyping();
+  setTimeout(() => { typing.remove(); const reply = getReply(clean); addMessage(reply); speak(reply); }, 550);
+}
+
+form.addEventListener('submit', (event) => { event.preventDefault(); sendMessage(input.value); });
+$('#suggestions').addEventListener('click', (event) => { if (event.target.matches('button')) sendMessage(event.target.textContent); });
+$('#clearBtn').addEventListener('click', () => { localStorage.removeItem(STORAGE_KEY); messages.innerHTML = ''; addMessage('Conversation cleared. What would you like to explore next?'); });
+
+const preferredTheme = localStorage.getItem('shifra-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+document.documentElement.dataset.theme = preferredTheme;
+themeBtn.textContent = preferredTheme === 'dark' ? '☀' : '☾';
+themeBtn.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; themeBtn.textContent = next === 'dark' ? '☀' : '☾'; localStorage.setItem('shifra-theme', next); });
+function updateSound() { soundBtn.textContent = soundEnabled ? '🔊' : '🔇'; soundBtn.setAttribute('aria-label', soundEnabled ? 'Turn spoken replies off' : 'Turn spoken replies on'); }
+soundBtn.addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('shifra-sound', soundEnabled ? 'on' : 'off'); if (!soundEnabled) speechSynthesis?.cancel(); updateSound(); }); updateSound();
+
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (Recognition) {
+  const recognition = new Recognition(); recognition.lang = 'en-IN'; recognition.interimResults = false;
+  micBtn.addEventListener('click', () => { try { recognition.start(); micBtn.classList.add('listening'); } catch {} });
+  recognition.onresult = (event) => sendMessage(event.results[0][0].transcript);
+  recognition.onend = () => micBtn.classList.remove('listening');
+  recognition.onerror = () => { micBtn.classList.remove('listening'); $('#supportNote').textContent = 'Voice input was unavailable. Please type your message.'; };
+} else { micBtn.disabled = true; micBtn.title = 'Voice input is not supported in this browser'; }
+
+try {
+  const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  if (history.length) history.forEach((item) => addMessage(item.text, item.role, false));
+  else addMessage('Hi! I’m Shifra, your virtual assistant. Ask me a question or choose a suggestion below.');
+} catch { addMessage('Hi! I’m Shifra. How can I help you today?'); }

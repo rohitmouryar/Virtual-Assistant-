@@ -1,24 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Assistant</title>
-    <link rel="icon" type="" href="image/favicon.jpg">
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6d5dfc">
+  <title>Shifra — Virtual Assistant</title>
+  <link rel="icon" href="image/favicon.jpg">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-   
-    <img id="logo" src="image/my_assistant.avif" alt="logo">
-    <h1>i'm <span id="name" >Shifra</span>,Your <span id="virtual" >Virtual Assistant</span></h1>
-    <img src="image/voice.webp" alt="voice" id="voice">
-    <button id="btn" ><img src="mic.svg" alt="">
-        <span id="content" >Click here for talk to me</span></button>
-    <script src="script.js"></script>
-  
-</body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Assistant information">
+      <div class="brand"><div class="brand-mark">S</div><span>Shifra</span></div>
+      <div class="assistant-card">
+        <img src="image/my_assistant.avif" alt="Shifra virtual assistant" class="avatar">
+        <span class="status"><i></i> Ready to help</span>
+        <h1>Your everyday assistant</h1>
+        <p>Ask questions, calculate, check the time, or open your favorite websites.</p>
+      </div>
+      <div class="notice"><strong>Browser-powered</strong><span>Answers use built-in knowledge. Unknown topics can be searched on Google.</span></div>
+      <button class="secondary-btn" id="clearBtn" type="button">Clear conversation</button>
+    </aside>
 
+    <main class="chat-panel">
+      <header class="topbar">
+        <div><p class="eyebrow">VIRTUAL ASSISTANT</p><h2>How can I help?</h2></div>
+        <div class="header-actions">
+          <button class="icon-btn" id="soundBtn" type="button" aria-label="Turn spoken replies off" title="Spoken replies">🔊</button>
+          <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme" title="Switch theme">☾</button>
+        </div>
+      </header>
+
+      <section class="messages" id="messages" aria-live="polite" aria-label="Conversation"></section>
+
+      <section class="suggestions" id="suggestions" aria-label="Suggested questions">
+        <button type="button">What can you do?</button>
+        <button type="button">What time is it?</button>
+        <button type="button">Calculate 24 × 18</button>
+        <button type="button">Open YouTube</button>
+      </section>
+
+      <form class="composer" id="chatForm">
+        <label class="sr-only" for="userInput">Message Shifra</label>
+        <input id="userInput" autocomplete="off" maxlength="500" placeholder="Ask me anything…">
+        <button class="mic-btn" id="micBtn" type="button" aria-label="Speak your question" title="Voice input">
+          <img src="mic.svg" alt="">
+        </button>
+        <button class="send-btn" type="submit" aria-label="Send message">➜</button>
+      </form>
+      <p class="footer-note" id="supportNote">Shifra may make mistakes. Verify important information.</p>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
 </html>
