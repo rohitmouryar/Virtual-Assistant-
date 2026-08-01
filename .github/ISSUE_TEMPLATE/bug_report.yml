@@ -1,0 +1,22 @@
+name: Bug report
+description: Tell us what is not working in Shifra.
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Include the command or action you tried.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open Shifra\n2. ..."
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Browser and device
+      placeholder: "Chrome 130 on Android"
+    validations:
+      required: true
