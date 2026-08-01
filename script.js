@@ -131,6 +131,18 @@ function getReply(raw) {
   };
 }
 
+function cleanAssistantReply(text) {
+  return text
+    .replace(/```[a-zA-Z]*\n?/g, '')
+    .replace(/```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/^\s*#{1,6}\s*/gm, '')
+    .replace(/^\s*(?:[-*+] |\d+\. )/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 async function getAssistantReply(raw) {
   const localReply = getReply(raw);
   if (typeof localReply === 'string') return localReply;
@@ -142,7 +154,7 @@ async function getAssistantReply(raw) {
     });
     const data = await response.json();
     if (!response.ok || typeof data.reply !== 'string') throw new Error(data.error || 'AI request failed');
-    return data.reply;
+    return cleanAssistantReply(data.reply);
   } catch {
     return localReply;
   }

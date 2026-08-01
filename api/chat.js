@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 
 const model = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
+const assistantInstructions = 'You are Shifra, a concise, warm everyday assistant. Reply in the user’s language; support English, Hindi, and Hinglish. Use plain text only: no Markdown, headings, bullets, bold text, backticks, tables, or code blocks. Keep everyday answers to three short sentences unless the user explicitly asks for a detailed explanation or code. Do not claim to perform actions you cannot perform. For high-stakes medical, legal, or financial questions, recommend consulting a qualified professional.';
 
 function normalizeHistory(history) {
   if (!Array.isArray(history)) return [];
@@ -28,12 +29,12 @@ export default async function handler(request, response) {
     const completion = await client.chat.completions.create({
       model,
       messages: [
-        { role: 'developer', content: 'You are Shifra, a concise, warm everyday assistant. Reply in the user’s language; support English, Hindi, and Hinglish. Do not claim to perform actions you cannot perform. For high-stakes medical, legal, or financial questions, recommend consulting a qualified professional.' },
+        { role: 'developer', content: assistantInstructions },
         ...normalizeHistory(body.history),
         { role: 'user', content: message }
       ],
       temperature: 0.4,
-      max_completion_tokens: 500
+      max_completion_tokens: 220
     });
     const reply = completion.choices[0]?.message?.content?.trim();
     if (!reply) throw new Error('Empty model response');
