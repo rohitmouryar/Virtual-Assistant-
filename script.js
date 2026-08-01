@@ -131,6 +131,14 @@ function getReply(raw) {
   };
 }
 
+function searchFallback(query, reason = '') {
+  const realTimeTopic = /(weather|temperature|forecast|rain|price|stock|news|score|flight|traffic|rate|mausam|temperature|barish|khabar|daam)/i.test(query);
+  const message = realTimeTopic
+    ? 'I don’t have real-time data, so I can’t give you the exact answer right now. Click Search Google to see the latest information.'
+    : (reason || 'I don’t have a reliable answer for that right now. Click Search Google to find the latest information.');
+  return { text: message, action: { label: 'Search Google', url: `https://www.google.com/search?q=${encodeURIComponent(query)}` } };
+}
+
 function cleanAssistantReply(text) {
   return text
     .replace(/```[a-zA-Z]*\n?/g, '')
@@ -154,9 +162,11 @@ async function getAssistantReply(raw) {
     });
     const data = await response.json();
     if (!response.ok || typeof data.reply !== 'string') throw new Error(data.error || 'AI request failed');
-    return cleanAssistantReply(data.reply);
+    const reply = cleanAssistantReply(data.reply);
+    if (/^UNAVAILABLE\b/i.test(reply)) return searchFallback(raw, reply.replace(/^UNAVAILABLE\s*:?-?\s*/i, ''));
+    return reply;
   } catch {
-    return localReply;
+    return searchFallback(raw);
   }
 }
 
