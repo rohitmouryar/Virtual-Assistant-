@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shifra-v1';
+const CACHE_NAME = 'shifra-v2';
 const APP_SHELL = ['./', './index.html', './style.css', './script.js', './manifest.webmanifest', './mic.svg', './image/favicon.jpg', './image/my_assistant.avif'];
 
 self.addEventListener('install', (event) => {
