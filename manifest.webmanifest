@@ -1,0 +1,10 @@
+{
+  "name": "Shifra Virtual Assistant",
+  "short_name": "Shifra",
+  "description": "A lightweight, voice-enabled browser assistant for everyday tasks.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f4fa",
+  "theme_color": "#6d5dfc",
+  "icons": [{ "src": "image/favicon.jpg", "sizes": "1024x1024", "type": "image/jpeg", "purpose": "any maskable" }]
+}

@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6d5dfc">
+  <meta name="description" content="Shifra is a lightweight, voice-enabled browser assistant for everyday tasks.">
   <title>Shifra — Virtual Assistant</title>
   <link rel="icon" href="image/favicon.jpg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="image/favicon.jpg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +21,7 @@
         <h1>Your everyday assistant</h1>
         <p>Ask questions, calculate, check the time, or open your favorite websites.</p>
       </div>
-      <div class="notice"><strong>Browser-powered</strong><span>Answers use built-in knowledge. Unknown topics can be searched on Google.</span></div>
+      <div class="notice"><strong>Smart when connected</strong><span>Everyday commands work in your browser. Other questions use the optional, secure AI service.</span></div>
       <button class="secondary-btn" id="clearBtn" type="button">Clear conversation</button>
     </aside>
 
@@ -26,6 +29,7 @@
       <header class="topbar">
         <div><p class="eyebrow">VIRTUAL ASSISTANT</p><h2>How can I help?</h2></div>
         <div class="header-actions">
+          <button class="icon-btn language-btn" id="languageBtn" type="button" aria-label="Switch voice input language" title="Voice input language">EN</button>
           <button class="icon-btn" id="soundBtn" type="button" aria-label="Turn spoken replies off" title="Spoken replies">🔊</button>
           <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch theme" title="Switch theme">☾</button>
         </div>
