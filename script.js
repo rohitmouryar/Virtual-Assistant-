@@ -7,6 +7,7 @@ const themeBtn = $('#themeBtn');
 const soundBtn = $('#soundBtn');
 const languageBtn = $('#languageBtn');
 const STORAGE_KEY = 'shifra-conversation-v2';
+const MAX_SAVED_MESSAGES = 40;
 let soundEnabled = localStorage.getItem('shifra-sound') !== 'off';
 const voiceLanguages = [
   { code: 'en-IN', label: 'EN', name: 'English (India)' },
@@ -27,18 +28,18 @@ function timeNow() {
 }
 
 function saveConversation() {
-  const history = [...messages.querySelectorAll('.message')].map((item) => ({
-    role: item.classList.contains('user') ? 'user' : 'assistant',
-    text: item.querySelector('.bubble-text')?.textContent || ''
-  })).filter((item) => item.text);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-40)));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(conversationHistory(MAX_SAVED_MESSAGES)));
+  } catch {
+    $('#supportNote').textContent = 'Chat history could not be saved in this browser.';
+  }
 }
 
-function conversationHistory() {
+function conversationHistory(limit = 10) {
   return [...messages.querySelectorAll('.message')].map((item) => ({
     role: item.classList.contains('user') ? 'user' : 'assistant',
     text: item.querySelector('.bubble-text')?.textContent || ''
-  })).filter((item) => item.text).slice(-10);
+  })).filter((item) => item.text).slice(-limit);
 }
 
 function addMessage(text, role = 'assistant', shouldSave = true, action = null) {
@@ -171,7 +172,15 @@ function sendMessage(text) {
 
 form.addEventListener('submit', (event) => { event.preventDefault(); sendMessage(input.value); });
 $('#suggestions').addEventListener('click', (event) => { if (event.target.matches('button')) sendMessage(event.target.textContent); });
-$('#clearBtn').addEventListener('click', () => { localStorage.removeItem(STORAGE_KEY); messages.innerHTML = ''; addMessage('Conversation cleared. What would you like to explore next?'); });
+function clearConversation() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  messages.innerHTML = '';
+  addMessage('Conversation cleared. What would you like to explore next?', 'assistant', false);
+  $('#supportNote').textContent = 'Conversation cleared from this device.';
+}
+
+$('#clearBtn').addEventListener('click', clearConversation);
+$('#headerClearBtn').addEventListener('click', clearConversation);
 
 const preferredTheme = localStorage.getItem('shifra-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 document.documentElement.dataset.theme = preferredTheme;
