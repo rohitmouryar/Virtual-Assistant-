@@ -1,6 +1,6 @@
 # Shifra Virtual Assistant
 
-A lightweight, privacy-friendly browser assistant built with HTML, CSS, and vanilla JavaScript. Shifra helps with everyday tasks through text or voice—without requiring an account or API key.
+A lightweight, privacy-friendly browser assistant built with HTML, CSS, and vanilla JavaScript. Shifra handles everyday commands through text or voice without an account; optional AI chat uses Groq's free API tier.
 
 > Shifra is currently rule-based, not a generative-AI chatbot. It gives instant answers for supported tasks and offers an optional Google search for other queries.
 
@@ -24,7 +24,7 @@ npm install
 copy .env.example .env
 ```
 
-Put your OpenAI API key in `.env`, then run `npm start` and open `http://localhost:3000`. Chrome or Edge offers the most reliable speech-recognition support. The assistant still works without an API key for its built-in commands; other questions show an optional Google search fallback.
+Create a free Groq API key at [console.groq.com](https://console.groq.com/keys), put it in `.env` as `GROQ_API_KEY`, then run `npm start` and open `http://localhost:3000`. Chrome or Edge offers the most reliable speech-recognition support. The assistant still works without an API key for its built-in commands; other questions show an optional Google search fallback.
 
 ## Try these commands
 
@@ -36,7 +36,19 @@ Put your OpenAI API key in `.env`, then run `npm start` and open `http://localho
 
 ## Privacy
 
-Conversation history, theme, and sound settings are saved in your browser's local storage. Voice recognition is provided by the browser. The OpenAI key is kept only in the server-side `.env` file and must never be added to the frontend or committed to GitHub. When Shifra cannot answer a question and the AI service is unavailable, it asks before opening a Google search.
+Conversation history, theme, and sound settings are saved in your browser's local storage. Voice recognition is provided by the browser. The Groq key is kept only in the server-side `.env` file and must never be added to the frontend or committed to GitHub. When Shifra cannot answer a question and the AI service is unavailable, it asks before opening a Google search.
+
+## Deploy on Vercel
+
+This project includes a Vercel Serverless Function at `api/chat.js`. Vercel hosts the website and this secure API route together; do not add a key to any frontend file.
+
+1. Push this project to GitHub and import the repository into Vercel.
+2. In Vercel, open **Project → Settings → Environment Variables**.
+3. Add `GROQ_API_KEY` with your Groq key. Select **Production**, **Preview**, and **Development**.
+4. Optionally add `GROQ_MODEL` with `openai/gpt-oss-20b`.
+5. Redeploy the project after saving the variables.
+
+The variable is read only by the serverless function and is not exposed to browser visitors.
 
 ## Roadmap
 

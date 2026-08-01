@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
-const model = process.env.OPENAI_MODEL || 'gpt-5.6-sol';
+const model = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 const requestsByIp = new Map();
 
 app.disable('x-powered-by');
@@ -37,24 +37,26 @@ function normalizeHistory(history) {
 }
 
 app.post('/api/chat', rateLimit, async (request, response) => {
-  if (!process.env.OPENAI_API_KEY) return response.status(503).json({ error: 'AI service is not configured yet.' });
+  if (!process.env.GROQ_API_KEY) return response.status(503).json({ error: 'AI service is not configured yet.' });
   const message = typeof request.body?.message === 'string' ? request.body.message.trim().slice(0, 2_000) : '';
   if (!message) return response.status(400).json({ error: 'Please enter a message.' });
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const completion = await client.responses.create({
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const completion = await client.chat.completions.create({
       model,
-      input: [
+      messages: [
         { role: 'developer', content: 'You are Shifra, a concise, warm everyday assistant. Reply in the user’s language; support English, Hindi, and Hinglish. Do not claim to perform actions you cannot perform. For high-stakes medical, legal, or financial questions, recommend consulting a qualified professional.' },
         ...normalizeHistory(request.body?.history),
         { role: 'user', content: message }
-      ]
+      ],
+      temperature: 0.4,
+      max_completion_tokens: 500
     });
-    const reply = completion.output_text?.trim();
+    const reply = completion.choices[0]?.message?.content?.trim();
     if (!reply) throw new Error('Empty model response');
     response.json({ reply });
   } catch (error) {
-    console.error('OpenAI request failed:', error?.status || error?.name || 'unknown error');
+    console.error('Groq request failed:', error?.status || error?.name || 'unknown error');
     response.status(502).json({ error: 'I could not reach the AI service. Please try again.' });
   }
 });
